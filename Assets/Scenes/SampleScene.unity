@@ -1413,6 +1413,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _target: {fileID: 3172645344870299907}
+  _maxSpeed: 10
+  _maxSpeedDistance: 2
 --- !u!1 &1076363188
 GameObject:
   m_ObjectHideFlags: 0
