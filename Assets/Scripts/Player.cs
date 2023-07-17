@@ -79,6 +79,9 @@ public class Player : MonoBehaviour {
 
         // 座標を更新
         transform.position = position;
+        
+        // 移動モーションのブレンド値を設定
+        _animator.SetFloat("Speed", speedRate);
     }
     
     /// <summary>攻撃</summary>
