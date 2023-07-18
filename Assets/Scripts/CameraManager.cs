@@ -1,6 +1,10 @@
 using UnityEngine;
+using DG.Tweening;
 
 public class CameraManager : MonoBehaviour {
+    // staticメンバにインスタンスを代入して各所からアクセスできるようにする
+    public static CameraManager Instance { get; private set; }
+
     /// <summary>注視対象</summary>
     [SerializeField] private Transform _target;
     
@@ -13,8 +17,14 @@ public class CameraManager : MonoBehaviour {
     /// <summary>注視対象を追いかける速度が最大になる距離</summary>
     [SerializeField] private float _maxSpeedDistance = 2f;
 
+    private Vector3 _shakeOffset;
+
+    private Sequence _shakeSeq;
+
     /// <summary>起動時の処理</summary>
     private void Awake() {
+        Instance = this;
+
         if (_target == null) {
             return;
         }
@@ -38,5 +48,19 @@ public class CameraManager : MonoBehaviour {
         var maxDistanceDelta = _maxSpeed * Mathf.InverseLerp(0f, _maxSpeedDistance, distance) * Time.deltaTime;
         // カメラを目標座標に向かって、計算した移動量分だけ移動させる
         transform.position = Vector3.MoveTowards(currentPos, targetPos, maxDistanceDelta);
+
+        // 振動によるオフセットを反映
+        transform.position += _shakeOffset;
+    }
+
+    /// <summary>画面の振動演出</summary>
+    public void Shake() {
+        // 前回の_shakeSeqがまだ再生中だった場合を考慮して、演出の強制終了メソッドを呼び出し
+        _shakeSeq?.Kill();
+        
+        // 0.3秒間、ランダムな方向に0.02mの幅で30回振動する演出を作成・再生
+        _shakeSeq = DOTween.Sequence()
+            .SetLink(gameObject)
+            .Append(DOTween.Shake(() => Vector3.zero, offset => _shakeOffset = offset, 0.3f, 0.02f, 30));
     }
 }
