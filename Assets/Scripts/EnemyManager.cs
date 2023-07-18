@@ -45,6 +45,11 @@ public class EnemyManager : MonoBehaviour {
         float nearestDiatance = float.MaxValue;
         
         foreach (var enemy in _enemies) {
+            // 死亡している敵は無視する
+            if (enemy.IsDead) {
+                continue;
+            }
+            
             // 敵と探査中心の距離を計算
             var distance = Vector3.Distance(enemy.transform.position, searchCenter);
             
