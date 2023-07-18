@@ -529,6 +529,7 @@ MonoBehaviour:
   _attackRange: 1.5
   _attacker: {fileID: 8135465959149887021}
   _hitCollider: {fileID: 1585742122822807295}
+  _bodyRenderer: {fileID: 1585742123493186468}
 --- !u!95 &1585742123497334116
 Animator:
   serializedVersion: 5

@@ -1590,6 +1590,11 @@ MonoBehaviour:
   _target: {fileID: 3172645344870299907}
   _maxSpeed: 10
   _maxSpeedDistance: 2
+--- !u!137 &967407028 stripped
+SkinnedMeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 13700004, guid: a58d63122b09e9144938cd6a1ece4824, type: 3}
+  m_PrefabInstance: {fileID: 202010362}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1076363188
 GameObject:
   m_ObjectHideFlags: 0
@@ -3014,6 +3019,7 @@ MonoBehaviour:
   _attackAdvanceDistance: 1.5
   _attackAdvanceMaxSpeed: 8
   _hitCollider: {fileID: 3172645344870299908}
+  _bodyRenderer: {fileID: 967407028}
 --- !u!95 &3172645344870299906 stripped
 Animator:
   m_CorrespondingSourceObject: {fileID: 9500000, guid: a58d63122b09e9144938cd6a1ece4824, type: 3}
