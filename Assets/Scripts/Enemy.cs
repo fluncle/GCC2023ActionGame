@@ -166,7 +166,7 @@ public class Enemy : MonoBehaviour {
 
         // HPが0になったの場合、死亡処理に分岐
         if (_hp <= 0) {
-            KnockBack(attackCollider);
+            KnockBack();
             Dead();
             return;
         }
@@ -175,7 +175,7 @@ public class Enemy : MonoBehaviour {
         _animator.SetTrigger("Damage");
 
         // ノックバック後にダメージ終了処理を呼び出す
-        KnockBack(attackCollider, EndDamage);
+        KnockBack(EndDamage);
     }
 
     /// <summary>色点滅の演出を再生</summary>
@@ -211,9 +211,8 @@ public class Enemy : MonoBehaviour {
     }
 
     /// <summary>ノックバック演出</summary>
-    /// <param name="attackCollider">攻撃コライダー</param>
     /// <param name="onComplete">ノックバック終了時の処理</param>
-    private void KnockBack(Collider attackCollider, Action onComplete = null) {
+    private void KnockBack(Action onComplete = null) {
         // 前回の_knockBackSeqがまだ再生中だった場合を考慮して、演出の強制終了メソッドを呼び出し
         _knockBackSeq?.Kill();
 
