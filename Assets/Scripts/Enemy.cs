@@ -1,3 +1,4 @@
+using DG.Tweening;
 using UnityEngine;
 
 public class Enemy : MonoBehaviour {
@@ -25,6 +26,12 @@ public class Enemy : MonoBehaviour {
 
     /// <summary>喰らい判定のコライダー</summary>
     [SerializeField] private Collider _hitCollider;
+
+    /// <summary>色の点滅演出のシーケンス</summary>
+    private Sequence _blinkColorSeq;
+
+    /// <summary>3Dモデルのレンダラー</summary>
+    [SerializeField] private Renderer _bodyRenderer;
 
     /// <summary>死亡しているか否か</summary>
     public bool IsDead => _hp <= 0;
@@ -138,6 +145,9 @@ public class Enemy : MonoBehaviour {
         // ヒットエフェクトを再生
         EffectManager.Instance.PlayAttackHit(hitPos + Vector3.up / 2f);
 
+        // ダメージによる点滅表現
+        BlinkColor(new Color(1f, 0.4f, 0.4f));
+
         // HPが0になったの場合、死亡処理に分岐
         if (_hp <= 0) {
             Dead();
@@ -149,6 +159,24 @@ public class Enemy : MonoBehaviour {
 
         // 1秒後にダメージ終了処理を呼び出す
         Invoke(nameof(EndDamage), 1f);
+    }
+
+    /// <summary>色点滅の演出を再生</summary>
+    /// <param name="color">点滅の色</param>
+    private void BlinkColor(Color color) {
+        // レンダラーからマテリアルを取得する
+        // TIPS: Rendererのmaterialにアクセスすると、そのタイミングでアタッチされているmaterialが複製され
+        //       Rendererに対してユニークなインスタンスとして扱えます
+        var material = _bodyRenderer.material;
+
+        // 前回の_blinkColorSeqがまだ再生中だった場合を考慮して、演出の強制終了メソッドを呼び出し
+        _blinkColorSeq?.Kill();
+        
+        // 0.1秒で引数の色に変化させ、その後0.15秒で元の色に戻す演出を作成・再生
+        _blinkColorSeq = DOTween.Sequence()
+            .SetLink(gameObject)
+            .Append(DOTween.To(() => Color.white, c => material.SetColor("_Color", c), color, 0.1f))
+            .Append(DOTween.To(() => color, c => material.SetColor("_Color", c), Color.white, 0.15f));
     }
 
     /// <summary>ダメージ終了</summary>
