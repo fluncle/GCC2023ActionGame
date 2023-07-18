@@ -41,6 +41,9 @@ public class Player : MonoBehaviour {
     /// <summary>ダメージ中フラグ</summary>
     private bool _damageFlag;
 
+    /// <summary>喰らい判定のコライダー</summary>
+    [SerializeField] private Collider _hitCollider;
+
     /// <summary>死亡しているか否か</summary>
     public bool IsDead => _hp <= 0;
 
@@ -196,13 +199,14 @@ public class Player : MonoBehaviour {
         if (other.CompareTag("EnemyAttack")) {
             // 攻撃情報を持つAttackerコンポーネントを取得する
             var attacker = other.GetComponent<Attacker>();
-            Damage(attacker.Power);
+            Damage(attacker.Power, other);
         }
     }
     
     /// <summary>ダメージ</summary>
     /// <param name="damage">ダメージ量</param>
-    private void Damage(int damage) {
+    /// <param name="attackCollider">攻撃コライダー</param>
+    private void Damage(int damage, Collider attackCollider) {
         if (IsDead) {
             // HPが既に0なら処理を抜ける
             return;
@@ -218,6 +222,10 @@ public class Player : MonoBehaviour {
         _hp = Mathf.Max(_hp - damage, 0);
         // HPゲージにHP量を反映
         GameUIManager.Instance.PlayerHPGauge.SetHP(_hp);
+
+        // ダメージ表示を再生
+        var hitPos = _hitCollider.ClosestPointOnBounds(attackCollider.transform.position);
+        DamageViewManager.Instance.Play(damage, hitPos);
 
         // HPが0になったの場合、死亡処理に分岐
         if (_hp <= 0) {

@@ -23,6 +23,9 @@ public class Enemy : MonoBehaviour {
     /// <summary>ダメージ中フラグ</summary>
     private bool _damageFlag;
 
+    /// <summary>喰らい判定のコライダー</summary>
+    [SerializeField] private Collider _hitCollider;
+
     /// <summary>死亡しているか否か</summary>
     public bool IsDead => _hp <= 0;
 
@@ -128,6 +131,10 @@ public class Enemy : MonoBehaviour {
 
         // ダメージ量分、HPを減らす
         _hp = Mathf.Max(_hp - damage, 0);
+
+        // ダメージ表示を再生
+        var hitPos = _hitCollider.ClosestPointOnBounds(attackCollider.transform.position);
+        DamageViewManager.Instance.Play(damage, hitPos);
 
         // HPが0になったの場合、死亡処理に分岐
         if (_hp <= 0) {
