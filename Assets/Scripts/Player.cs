@@ -266,8 +266,8 @@ public class Player : MonoBehaviour {
         // 0.1秒で引数の色に変化させ、その後0.15秒で元の色に戻す演出を作成・再生
         _blinkColorSeq = DOTween.Sequence()
             .SetLink(gameObject)
-            .Append(DOTween.To(() => Color.white, c => material.SetColor("_Color", c), color, 0.1f))
-            .Append(DOTween.To(() => color, c => material.SetColor("_Color", c), Color.white, 0.15f));
+            .Append(DOTween.To(() => Color.black, c => material.SetColor("_Color", c), color, 0.1f))
+            .Append(DOTween.To(() => color, c => material.SetColor("_Color", c), Color.black, 0.15f));
     }
 
     /// <summary>ダメージ終了</summary>
