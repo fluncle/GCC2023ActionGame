@@ -21,6 +21,12 @@ public class Player : MonoBehaviour {
     /// <summary>攻撃判定のコライダー</summary>
     [SerializeField] private Attacker _attacker;
 
+    /// <summary>攻撃目標の敵</summary>
+    private Enemy _attackTarget;
+
+    /// <summary>攻撃目標に向かって回転する速度(angle/s)</summary>
+    [SerializeField] private float _attackRotateSpeed;
+
     private int _hp;
 
     /// <summary>ダメージ中フラグ</summary>
@@ -51,6 +57,10 @@ public class Player : MonoBehaviour {
 
     /// <summary>更新処理</summary>
     private void Update() {
+        if (_attackFlag) {
+            UpdateAttackRotate();
+        }
+        
         if (!CanInput) {
             // 入力禁止時は処理を抜ける
             return;
@@ -95,6 +105,28 @@ public class Player : MonoBehaviour {
         _attackFlag = true;
         // 攻撃アニメーションのトリガーを起動
         _animator.SetTrigger("Attack");
+
+        // 半径4m以内にいる最寄りの敵を攻撃目標として設定する
+        _attackTarget = EnemyManager.Instance.GetNearestEnemy(transform.position, 4f);
+    }
+
+    /// <summary>攻撃時に敵に向かって回転させる更新処理</summary>
+    private void UpdateAttackRotate() {
+        if (_attackTarget == null) {
+            // 攻撃目標がいなければ何もしない
+            return;
+        }
+
+        // 攻撃目標への向き(Y角度)を計算
+        var targetVector = _attackTarget.transform.position - transform.position;
+        var targetAngleY = Quaternion.LookRotation(targetVector).eulerAngles.y;
+        
+        var eulerAngles = transform.eulerAngles;
+        // 回転速度を加味した今回のフレームでの回転量
+        var maxDelta = _attackRotateSpeed * Time.deltaTime;
+        // 敵に向かって、計算した回転量分だけ回転させる
+        eulerAngles.y = Mathf.MoveTowardsAngle(eulerAngles.y, targetAngleY, maxDelta);
+        transform.eulerAngles = eulerAngles;
     }
 
     /// <summary>

@@ -2834,6 +2834,7 @@ MonoBehaviour:
   _inputVirtualJoyStick: {fileID: 736578144}
   _maxSpeed: 3
   _attacker: {fileID: 1497645982}
+  _attackRotateSpeed: 180
 --- !u!95 &3172645344870299906 stripped
 Animator:
   m_CorrespondingSourceObject: {fileID: 9500000, guid: a58d63122b09e9144938cd6a1ece4824, type: 3}
