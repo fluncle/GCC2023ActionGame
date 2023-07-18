@@ -23,6 +23,9 @@ public class Enemy : MonoBehaviour {
     /// <summary>ダメージ中フラグ</summary>
     private bool _damageFlag;
 
+    /// <summary>死亡しているか否か</summary>
+    public bool IsDead => _hp <= 0;
+
     /// <summary>起動時の処理</summary>
     private void Awake() {
         _animator.SetBool("IsMove", true);
