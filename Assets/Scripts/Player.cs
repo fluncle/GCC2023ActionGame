@@ -239,6 +239,9 @@ public class Player : MonoBehaviour {
         // ダメージによる点滅表現
         BlinkColor(new Color(1f, 0.4f, 0.4f));
 
+        // ダメージによる画面振動演出
+        CameraManager.Instance.Shake();
+
         // HPが0になったの場合、死亡処理に分岐
         if (_hp <= 0) {
             Dead();

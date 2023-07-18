@@ -33,6 +33,9 @@ public class Enemy : MonoBehaviour {
     /// <summary>3Dモデルのレンダラー</summary>
     [SerializeField] private Renderer _bodyRenderer;
 
+    /// <summary>振動演出のシーケンス</summary>
+    private Sequence _shakeSeq;
+
     /// <summary>死亡しているか否か</summary>
     public bool IsDead => _hp <= 0;
 
@@ -148,6 +151,9 @@ public class Enemy : MonoBehaviour {
         // ダメージによる点滅表現
         BlinkColor(new Color(1f, 0.4f, 0.4f));
 
+        // ダメージによる振動表現
+        ShakeBody();
+
         // HPが0になったの場合、死亡処理に分岐
         if (_hp <= 0) {
             Dead();
@@ -177,6 +183,17 @@ public class Enemy : MonoBehaviour {
             .SetLink(gameObject)
             .Append(DOTween.To(() => Color.black, c => material.SetColor("_Color", c), color, 0.1f))
             .Append(DOTween.To(() => color, c => material.SetColor("_Color", c), Color.black, 0.15f));
+    }
+
+    /// <summary>振動演出を再生</summary>
+    private void ShakeBody() {
+        // 前回の_shakeSeqがまだ再生中だった場合を考慮して、演出の強制終了メソッドを呼び出し
+        _shakeSeq?.Kill();
+
+        // 0.5秒間、ランダムな方向に0.25mの幅で30回振動する演出を作成・再生
+        _shakeSeq = DOTween.Sequence()
+            .SetLink(gameObject)
+            .Append(transform.DOShakePosition(0.5f, 0.25f, 30));
     }
 
     /// <summary>ダメージ終了</summary>
