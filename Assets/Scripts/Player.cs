@@ -226,6 +226,8 @@ public class Player : MonoBehaviour {
         // ダメージ表示を再生
         var hitPos = _hitCollider.ClosestPointOnBounds(attackCollider.transform.position);
         DamageViewManager.Instance.Play(damage, hitPos);
+        // ヒットエフェクトを再生
+        EffectManager.Instance.PlayAttackHit(hitPos + Vector3.up / 2f);
 
         // HPが0になったの場合、死亡処理に分岐
         if (_hp <= 0) {
