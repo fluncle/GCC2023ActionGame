@@ -27,6 +27,15 @@ public class Player : MonoBehaviour {
     /// <summary>攻撃目標に向かって回転する速度(angle/s)</summary>
     [SerializeField] private float _attackRotateSpeed;
 
+    /// <summary>攻撃によって前進する距離(m)</summary>
+    [SerializeField] private float _attackAdvanceDistance;
+
+    /// <summary>攻撃前進の最高速度(m/s)</summary>
+    [SerializeField] private float _attackAdvanceMaxSpeed;
+    
+    /// <summary>攻撃中に前進した距離カウント</summary>
+    private float _attackAdvanceCount;
+
     private int _hp;
 
     /// <summary>ダメージ中フラグ</summary>
@@ -59,6 +68,7 @@ public class Player : MonoBehaviour {
     private void Update() {
         if (_attackFlag) {
             UpdateAttackRotate();
+            UpdateAttackAdvance();
         }
         
         if (!CanInput) {
@@ -108,6 +118,8 @@ public class Player : MonoBehaviour {
 
         // 半径4m以内にいる最寄りの敵を攻撃目標として設定する
         _attackTarget = EnemyManager.Instance.GetNearestEnemy(transform.position, 4f);
+
+        _attackAdvanceCount = 0f;
     }
 
     /// <summary>攻撃時に敵に向かって回転させる更新処理</summary>
@@ -127,6 +139,34 @@ public class Player : MonoBehaviour {
         // 敵に向かって、計算した回転量分だけ回転させる
         eulerAngles.y = Mathf.MoveTowardsAngle(eulerAngles.y, targetAngleY, maxDelta);
         transform.eulerAngles = eulerAngles;
+    }
+
+    /// <summary>攻撃時の前進の更新処理</summary>
+    private void UpdateAttackAdvance() {
+        // 残りの移動距離を計算
+        var remainAdvanceDistance = _attackAdvanceDistance - _attackAdvanceCount;
+
+        // 攻撃目標の敵がいる場合
+        if (_attackTarget != null) {
+            // 攻撃の前進によって、敵を通り過ぎてしまわないように
+            // 残りの移動距離より敵との距離の方が近ければ、敵との距離を残りの移動距離として扱う
+            var distance = Vector3.Distance(transform.position, _attackTarget.transform.position);
+            // 敵との距離が1m未満なら移動を止めるために、マイナス1する
+            distance -= 1f;
+            remainAdvanceDistance = Mathf.Min(remainAdvanceDistance, distance);
+        }
+
+        // 前進速度の計算
+        // 残りの移動距離が多いほど速度が速くなるよう計算している
+        // その結果、前進始めほど早く、後半が遅くなるイージングの動きになる
+        var advanceSpeed = _attackAdvanceMaxSpeed * Mathf.InverseLerp(0f, _attackAdvanceDistance, remainAdvanceDistance);
+        // 今回のフレームでの前進距離
+        var advanceDistance = advanceSpeed * Time.deltaTime;
+        // 前方に向かって前進距離分、座標を更新
+        transform.position += transform.forward * advanceDistance;
+        
+        // 攻撃中に前進した距離をカウント
+        _attackAdvanceCount += advanceDistance;
     }
 
     /// <summary>
