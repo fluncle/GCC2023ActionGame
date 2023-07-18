@@ -1,3 +1,4 @@
+using System;
 using DG.Tweening;
 using UnityEngine;
 
@@ -35,6 +36,15 @@ public class Enemy : MonoBehaviour {
 
     /// <summary>振動演出のシーケンス</summary>
     private Sequence _shakeSeq;
+    
+    /// <summary>振動のオフセットベクトル</summary>
+    private Vector3 _shakeOffset;
+
+    /// <summary>振動演出のRoot</summary>
+    [SerializeField] private Transform _shakeRoot;
+    
+    /// <summary>ノックバック演出のシーケンス</summary>
+    private Sequence _knockBackSeq;
 
     /// <summary>死亡しているか否か</summary>
     public bool IsDead => _hp <= 0;
@@ -156,6 +166,7 @@ public class Enemy : MonoBehaviour {
 
         // HPが0になったの場合、死亡処理に分岐
         if (_hp <= 0) {
+            KnockBack(attackCollider);
             Dead();
             return;
         }
@@ -163,8 +174,8 @@ public class Enemy : MonoBehaviour {
         // ダメージアニメーションのトリガーを起動
         _animator.SetTrigger("Damage");
 
-        // 1秒後にダメージ終了処理を呼び出す
-        Invoke(nameof(EndDamage), 1f);
+        // ノックバック後にダメージ終了処理を呼び出す
+        KnockBack(attackCollider, EndDamage);
     }
 
     /// <summary>色点滅の演出を再生</summary>
@@ -191,9 +202,29 @@ public class Enemy : MonoBehaviour {
         _shakeSeq?.Kill();
 
         // 0.5秒間、ランダムな方向に0.25mの幅で30回振動する演出を作成・再生
+        // NOTE: 今回振動させるRootがAnimatorによって毎フレーム座標が上書きされるため、LateUpdateでオフセット値を加える形に対応している
         _shakeSeq = DOTween.Sequence()
             .SetLink(gameObject)
-            .Append(transform.DOShakePosition(0.5f, 0.25f, 30));
+            .Append(DOTween.Shake(() => Vector3.zero, offset => _shakeOffset = offset, 0.5f, 0.25f, 30))
+            .OnUpdate(() => _shakeRoot.localPosition += _shakeOffset)
+            .SetUpdate(UpdateType.Late);
+    }
+
+    /// <summary>ノックバック演出</summary>
+    /// <param name="attackCollider">攻撃コライダー</param>
+    /// <param name="onComplete">ノックバック終了時の処理</param>
+    private void KnockBack(Collider attackCollider, Action onComplete = null) {
+        // 前回の_knockBackSeqがまだ再生中だった場合を考慮して、演出の強制終了メソッドを呼び出し
+        _knockBackSeq?.Kill();
+
+        // 後ろ方向0.8m位置をノックバック移動目標座標とする
+        var endPos = transform.position - transform.forward * 1.2f;
+        
+        // 0.5秒でendPosに移動した後、onCompleteの処理を呼び出す演出を作成・再生
+        _knockBackSeq = DOTween.Sequence()
+            .SetLink(gameObject)
+            .Append(transform.DOMove(endPos, 0.5f).SetEase(Ease.OutCubic))
+            .OnComplete(() => onComplete?.Invoke());
     }
 
     /// <summary>ダメージ終了</summary>
