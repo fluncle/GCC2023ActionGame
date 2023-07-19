@@ -51,8 +51,8 @@ public class EnemyStateDamage : EnemyStateBase {
         // ダメージアニメーションのトリガーを起動
         _enemy.Animator.SetTrigger("Damage");
 
-        // ノックバック後に追跡状態へ遷移
-        Action onComplete = () => _enemy.Transition(new EnemyStatePursue(_enemy));
+        // ノックバック後に待機状態へ遷移
+        Action onComplete = () => _enemy.Transition(new EnemyStatePatrol(_enemy));
         _enemy.KnockBack(onComplete);
     }
 }

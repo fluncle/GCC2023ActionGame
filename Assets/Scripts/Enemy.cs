@@ -52,8 +52,8 @@ public class Enemy : MonoBehaviour {
 
     /// <summary>起動時の処理</summary>
     private void Awake() {
-        // 追跡状態から開始
-        _state = new EnemyStatePursue(this);
+        // 待機状態から開始
+        _state = new EnemyStatePatrol(this);
         _hp = MAX_HP;
     }
 
@@ -96,8 +96,8 @@ public class Enemy : MonoBehaviour {
 
     /// <summary>攻撃終了</summary>
     private void EndAttack() {
-        // 追跡状態へ遷移
-        Transition(new EnemyStatePursue(this));
+        // 待機状態へ遷移
+        Transition(new EnemyStatePatrol(this));
     }
 
     /// <summary>TriggerのColliderとの接触処理</summary>

@@ -2,6 +2,9 @@ using UnityEngine;
 
 /// <summary>プレイヤーを追いかける状態</summary>
 public class EnemyStatePursue : EnemyStateBase {
+    /// <summary>追跡を諦める距離</summary>
+    private const float CANCEL_DISTANCE = 5f;
+    
     public EnemyStatePursue(Enemy enemy) : base(enemy) { }
 
     /// <summary>このStateに遷移したときに最初に呼び出す処理</summary>
@@ -26,6 +29,13 @@ public class EnemyStatePursue : EnemyStateBase {
         if (distance <= _enemy.AttackRange) {
             // 攻撃時は移動処理をせず処理を抜ける
             _enemy.Transition(new EnemyStateAttack(_enemy));
+            return;
+        }
+
+        // 一定距離以上プレイヤーから離れたら追跡をやめる
+        if (distance > CANCEL_DISTANCE) {
+            // パトロール状態へ遷移
+            _enemy.Transition(new EnemyStatePatrol(_enemy));
             return;
         }
 
