@@ -90,14 +90,6 @@ public class Enemy : MonoBehaviour {
     /// <summary>攻撃判定を無効化</summary>
     private void DisableAttackCollider() {
         _attacker.Collider.enabled = false;
-        // 1秒後に攻撃終了処理を呼び出す
-        Invoke(nameof(EndAttack), 1f);
-    }
-
-    /// <summary>攻撃終了</summary>
-    private void EndAttack() {
-        // 待機状態へ遷移
-        Transition(new EnemyStatePatrol(this));
     }
 
     /// <summary>TriggerのColliderとの接触処理</summary>
