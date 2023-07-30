@@ -37,6 +37,9 @@ public class Enemy : MonoBehaviour {
     /// <summary>3Dモデルのレンダラー</summary>
     [SerializeField] private Renderer _bodyRenderer;
 
+    /// <summary>3Dモデルのマテリアル</summary>
+    [SerializeField] private Material _bodyMaterial;
+
     /// <summary>振動演出のシーケンス</summary>
     private Sequence _shakeSeq;
     
@@ -56,6 +59,11 @@ public class Enemy : MonoBehaviour {
     private void Awake() {
         _animator.SetBool("IsMove", true);
         _hp = MAX_HP;
+        
+        // レンダラーからマテリアルを取得する
+        // TIPS: Rendererのmaterialにアクセスすると、そのタイミングでアタッチされているmaterialが複製され
+        //       Rendererに対してユニークなインスタンスとして扱えます
+        _bodyMaterial = _bodyRenderer.material;
     }
 
     /// <summary>更新処理</summary>
@@ -90,6 +98,8 @@ public class Enemy : MonoBehaviour {
         _attackReadyFlag = true;
         // 移動アニメーションのフラグを降ろす
         _animator.SetBool("IsMove", false);
+        // 攻撃準備表現として、体を3回点滅させる
+        FadeColor(Color.gray, 3);
         // 0.1秒後に攻撃判定を無効にする処理を呼び出す
         Invoke(nameof(Attack), 0.3f);
     }
@@ -120,6 +130,8 @@ public class Enemy : MonoBehaviour {
     /// <summary>攻撃判定を無効化</summary>
     private void DisableAttackCollider() {
         _attacker.Collider.enabled = false;
+        // 攻撃準備表現の点滅を停止する
+        _blinkColorSeq?.Complete();
         // 1秒後に攻撃終了処理を呼び出す
         Invoke(nameof(EndAttack), 1f);
     }
@@ -203,19 +215,36 @@ public class Enemy : MonoBehaviour {
     /// <summary>色点滅の演出を再生</summary>
     /// <param name="color">点滅の色</param>
     private void BlinkColor(Color color) {
-        // レンダラーからマテリアルを取得する
-        // TIPS: Rendererのmaterialにアクセスすると、そのタイミングでアタッチされているmaterialが複製され
-        //       Rendererに対してユニークなインスタンスとして扱えます
-        var material = _bodyRenderer.material;
-
         // 前回の_blinkColorSeqがまだ再生中だった場合を考慮して、演出の強制終了メソッドを呼び出し
         _blinkColorSeq?.Kill();
         
         // 0.1秒で引数の色に変化させ、その後0.15秒で元の色に戻す演出を作成・再生
         _blinkColorSeq = DOTween.Sequence()
             .SetLink(gameObject)
-            .Append(DOTween.To(() => Color.black, c => material.SetColor("_Color", c), color, 0.1f))
-            .Append(DOTween.To(() => color, c => material.SetColor("_Color", c), Color.black, 0.15f));
+            .Append(DOTween.To(() => Color.black, SetColor, color, 0.1f))
+            .Append(DOTween.To(() => color, SetColor, Color.black, 0.15f));
+    }
+
+    /// <summary>フェードによる色点滅の演出を再生</summary>
+    /// <param name="color">点滅の色</param>
+    /// <param name="loop">ループ回数</param>
+    private void FadeColor(Color color, int loop) {
+        // 前回の_blinkColorSeqがまだ再生中だった場合を考慮して、演出の強制終了メソッドを呼び出し
+        _blinkColorSeq?.Kill();
+
+        _blinkColorSeq = DOTween.Sequence()
+            .SetLink(gameObject);
+
+        for (int i = 0; i < loop; i++) {
+            _blinkColorSeq
+                .Append(DOTween.To(() => Color.black, SetColor, color, 0.15f))
+                .Append(DOTween.To(() => color, SetColor, Color.black, 0.15f));
+        }
+    }
+
+    /// <summary>色を設定</summary>
+    private void SetColor(Color color) {
+        _bodyMaterial.SetColor("_Color", color);
     }
 
     /// <summary>振動演出を再生</summary>
