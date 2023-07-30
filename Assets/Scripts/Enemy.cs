@@ -100,6 +100,8 @@ public class Enemy : MonoBehaviour {
         _animator.SetBool("IsMove", false);
         // 攻撃準備表現として、体を3回点滅させる
         FadeColor(Color.gray, 3);
+        // 攻撃準備表現として、体を振動させる
+        ShakeBody(2);
         // 0.1秒後に攻撃判定を無効にする処理を呼び出す
         Invoke(nameof(Attack), 0.3f);
     }
@@ -132,6 +134,8 @@ public class Enemy : MonoBehaviour {
         _attacker.Collider.enabled = false;
         // 攻撃準備表現の点滅を停止する
         _blinkColorSeq?.Complete();
+        // 攻撃準備表現の振動を停止する
+        _shakeSeq?.Complete();
         // 1秒後に攻撃終了処理を呼び出す
         Invoke(nameof(EndAttack), 1f);
     }
@@ -259,6 +263,19 @@ public class Enemy : MonoBehaviour {
             .Append(DOTween.Shake(() => Vector3.zero, offset => _shakeOffset = offset, 0.5f, 0.25f, 30))
             .OnUpdate(() => _shakeRoot.localPosition += _shakeOffset)
             .SetUpdate(UpdateType.Late);
+    }
+
+    /// <summary>ループする振動演出を再生</summary>
+    private void ShakeBody(int loop) {
+        // 前回の_shakeSeqがまだ再生中だった場合を考慮して、演出の強制終了メソッドを呼び出し
+        _shakeSeq?.Kill();
+
+        _shakeSeq = DOTween.Sequence()
+            .SetLink(gameObject)
+            .Append(DOTween.Shake(() => Vector3.zero, offset => _shakeOffset = offset, 0.5f, 0.15f, 20, fadeOut: false))
+            .OnUpdate(() => _shakeRoot.localPosition += _shakeOffset)
+            .SetUpdate(UpdateType.Late)
+            .SetLoops(loop);
     }
 
     /// <summary>ノックバック演出</summary>
