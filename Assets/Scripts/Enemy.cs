@@ -96,6 +96,8 @@ public class Enemy : MonoBehaviour {
     private void AttackReady() {
         // 攻撃準備中フラグを立てる
         _attackReadyFlag = true;
+        // 攻撃準備アニメーションのトリガーを起動
+        _animator.SetTrigger("AttackReady");
         // 移動アニメーションのフラグを降ろす
         _animator.SetBool("IsMove", false);
         // 攻撃準備表現として、体を3回点滅させる
@@ -171,6 +173,8 @@ public class Enemy : MonoBehaviour {
         if (_attackReadyFlag) {
             // 攻撃準備中フラグを降ろす
             _attackReadyFlag = false;
+            // 攻撃準備アニメーションのトリガーをリセットする
+            _animator.ResetTrigger("AttackReady");
             // 登録したAttackのInvokeをキャンセル
             CancelInvoke(nameof(Attack));
         }
