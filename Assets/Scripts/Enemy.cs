@@ -1,6 +1,7 @@
 using System;
 using DG.Tweening;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 public class Enemy : MonoBehaviour {
     /// <summary>最大HP</summary>
@@ -312,8 +313,25 @@ public class Enemy : MonoBehaviour {
         _animator.SetTrigger("Dead");
         // 死亡エフェクトを再生
         _deadEffect.Play();
-        // 2秒後に死亡終了処理を呼び出す
-        Invoke(nameof(EndDead), 2f);
+
+        // _blinkColorSeqがまだ再生中だった場合を考慮して、演出の強制終了メソッドを呼び出し
+        _blinkColorSeq?.Kill();
+        // 死亡時の色を設定
+        SetColor(new Color(0.3f, 0.1f, 1f));
+
+        // フェードアウト演出のために影を落とさないようにする
+        _bodyRenderer.shadowCastingMode = ShadowCastingMode.Off;
+
+        // 1.5秒かけてディゾルブ表現によるフェードアウトを再生し、その後に死亡終了処理を呼び出す
+        DOTween.Sequence()
+            .SetLink(gameObject)
+            .Append(DOTween.To(() => 0f, SetDisolveFade, 1f, 1.5f))
+            .OnComplete(EndDead);
+    }
+
+    /// <summary>ディゾルブ表現によるフェードを設定</summary>
+    private void SetDisolveFade(float threshold) {
+        _bodyMaterial.SetFloat("_Threshold", threshold);
     }
 
     /// <summary>死亡終了</summary>
