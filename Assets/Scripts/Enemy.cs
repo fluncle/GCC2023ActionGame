@@ -52,6 +52,9 @@ public class Enemy : MonoBehaviour {
     /// <summary>ノックバック演出のシーケンス</summary>
     private Sequence _knockBackSeq;
 
+    /// <summary> 死亡時に再生するエフェクト </summary>
+    [SerializeField] private ParticleSystem _deadEffect;
+    
     /// <summary>死亡しているか否か</summary>
     public bool IsDead => _hp <= 0;
 
@@ -208,7 +211,6 @@ public class Enemy : MonoBehaviour {
 
         // HPが0になったの場合、死亡処理に分岐
         if (_hp <= 0) {
-            KnockBack();
             Dead();
             return;
         }
@@ -308,6 +310,8 @@ public class Enemy : MonoBehaviour {
     private void Dead() {
         // 死亡アニメーションのトリガーを起動
         _animator.SetTrigger("Dead");
+        // 死亡エフェクトを再生
+        _deadEffect.Play();
         // 2秒後に死亡終了処理を呼び出す
         Invoke(nameof(EndDead), 2f);
     }
