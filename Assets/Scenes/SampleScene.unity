@@ -1091,6 +1091,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _effectsParent: {fileID: 766644005}
   _attackHitPrefab: {fileID: 198602994958770764, guid: 477296c4ffd1044b887dba65847774a8, type: 3}
+  _attackHitDeadPrefab: {fileID: 2858719418465607203, guid: 1137be6ad78d845e68caf50d236eff06, type: 3}
 --- !u!4 &766644005
 Transform:
   m_ObjectHideFlags: 0

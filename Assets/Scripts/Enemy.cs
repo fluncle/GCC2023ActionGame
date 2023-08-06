@@ -205,8 +205,6 @@ public class Enemy : MonoBehaviour {
         // ダメージ表示を再生
         var hitPos = _hitCollider.ClosestPointOnBounds(attackCollider.transform.position);
         DamageViewManager.Instance.Play(damage, hitPos);
-        // ヒットエフェクトを再生
-        EffectManager.Instance.PlayAttackHit(hitPos + Vector3.up / 2f);
 
         // ダメージによる点滅表現
         BlinkColor(new Color(1f, 0.4f, 0.4f));
@@ -217,10 +215,15 @@ public class Enemy : MonoBehaviour {
         // HPが0になったの場合、死亡処理に分岐
         if (_hp <= 0) {
             BeginDead();
+            // 致死ダメージヒットエフェクトを再生
+            EffectManager.Instance.PlayAttackHitDead(hitPos);
             // 致死ダメージ時、プレイヤーのヒットストップ処理を呼ぶ
             GameManager.Instance.Player.PlayHitStop(HIT_STOP_DURATION);
             return;
         }
+
+        // ヒットエフェクトを再生
+        EffectManager.Instance.PlayAttackHit(hitPos);
 
         // ダメージアニメーションのトリガーを起動
         _animator.SetTrigger("Damage");
