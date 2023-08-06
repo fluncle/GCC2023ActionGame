@@ -37,6 +37,9 @@ public class Player : MonoBehaviour {
     /// <summary>攻撃中に前進した距離カウント</summary>
     private float _attackAdvanceCount;
 
+    /// <summary>ヒットストップ演出のシーケンス</summary>
+    private Sequence _hitStopSeq;
+
     private int _hp;
 
     /// <summary>ダメージ中フラグ</summary>
@@ -197,6 +200,20 @@ public class Player : MonoBehaviour {
         _attacker.Collider.enabled = false;
         // 攻撃中フラグを降ろす
         _attackFlag = false;
+    }
+
+    /// <summary> ヒットストップ演出を再生 </summary>
+    /// <param name="duration">停止時間</param>
+    public void PlayHitStop(float duration) {
+        // モーションを止める
+        _animator.speed = 0f;
+
+        _hitStopSeq?.Kill();
+        _hitStopSeq = DOTween.Sequence()
+            .SetLink(gameObject)
+            .SetDelay(duration)
+            // モーションを再開
+            .AppendCallback(() => _animator.speed = 1f);
     }
 
     /// <summary>TriggerのColliderとの接触処理</summary>

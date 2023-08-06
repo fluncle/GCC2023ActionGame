@@ -2,10 +2,14 @@ using System;
 using DG.Tweening;
 using UnityEngine;
 using UnityEngine.Rendering;
+using Sequence = DG.Tweening.Sequence;
 
 public class Enemy : MonoBehaviour {
     /// <summary>最大HP</summary>
     private const int MAX_HP = 30;
+
+    /// <summary>ヒットストップ時間</summary>
+    private const float HIT_STOP_DURATION = 0.3f;
 
     [SerializeField] private Animator _animator;
 
@@ -212,7 +216,9 @@ public class Enemy : MonoBehaviour {
 
         // HPが0になったの場合、死亡処理に分岐
         if (_hp <= 0) {
-            Dead();
+            BeginDead();
+            // 致死ダメージ時、プレイヤーのヒットストップ処理を呼ぶ
+            GameManager.Instance.Player.PlayHitStop(HIT_STOP_DURATION);
             return;
         }
 
@@ -307,10 +313,25 @@ public class Enemy : MonoBehaviour {
         _damageFlag = false;
     }
 
-    /// <summary>死亡</summary>
-    private void Dead() {
+    /// <summary>死亡演出開始</summary>
+    private void BeginDead() {
         // 死亡アニメーションのトリガーを起動
         _animator.SetTrigger("Dead");
+        _animator.speed = 0f;
+
+        // _blinkColorSeqがまだ再生中だった場合を考慮して、演出の強制終了メソッドを呼び出し
+        _blinkColorSeq?.Kill();
+        // 致死ダメージ時の色を設定
+        SetColor(new Color(1f, 0.4f, 0.4f));
+
+        // ヒットストップ時間経過後に死亡処理を呼び出す
+        Invoke(nameof(Dead), HIT_STOP_DURATION);
+    }
+
+    /// <summary>死亡</summary>
+    private void Dead() {
+        // アニメーションを再開
+        _animator.speed = 1f;
         // 死亡エフェクトを再生
         _deadEffect.Play();
 
