@@ -24,13 +24,15 @@ public class EnemyStatePursue : EnemyStateBase {
         var enemyrRot = _enemy.transform.rotation;
 
         // プレイヤーの方向へ回転
+        var targetVector = playerPos - enemyrT.position;
         var lookRotation = Quaternion.LookRotation(playerPos - enemyrT.position);
         var turnDegrees = _enemy.Param.MaxTurnSpeed * Time.deltaTime;
         _enemy.transform.rotation = Quaternion.RotateTowards(enemyrRot, lookRotation, turnDegrees);
 
-        // プレイヤーが攻撃範囲にいたら攻撃を実行
+        // 攻撃範囲内かつプレイヤーの方向を向いていたら攻撃を実行
         var distance = Vector3.Distance(enemyrT.position, playerPos);
-        if (distance <= _enemy.Param.AttackRange) {
+        var degrees = Vector3.Angle(_enemy.transform.forward, targetVector);
+        if (distance <= _enemy.Param.AttackRange && degrees <= 10f) {
             // 攻撃時は移動処理をせず処理を抜ける
             _enemy.Transition(new EnemyStateAttack(_enemy));
             return;

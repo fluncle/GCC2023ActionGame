@@ -43,8 +43,11 @@ public class Enemy : MonoBehaviour {
     /// <summary>現在の状態</summary>
     private StateBase _state;
 
-    /// <summary>攻撃判定のコライダー</summary>
+    /// <summary>攻撃情報</summary>
     [SerializeField] private Attacker _attacker;
+
+    /// <summary>攻撃判定のコライダー</summary>
+    [SerializeField] private CapsuleCollider _attackCollider;
 
     private int _hp;
 
@@ -78,6 +81,14 @@ public class Enemy : MonoBehaviour {
         // 待機状態から開始
         _state = new EnemyStatePatrol(this);
         _hp = Param.MaxHP;
+
+        // 攻撃判定を攻撃範囲に合わせて伸ばす
+        _attackCollider.height = Param.AttackRange;
+        // 攻撃判定をオフセット
+        var attackColliderCenter = _attackCollider.center;
+        // 攻撃開始時にコライダーが対象にややめり込むように、0.5m余分にオフセットする
+        attackColliderCenter.z = Param.AttackRange / 2f + 0.5f;
+        _attackCollider.center = attackColliderCenter;
     }
 
     /// <summary>状態遷移</summary>
