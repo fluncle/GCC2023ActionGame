@@ -6,26 +6,27 @@ public class Enemy : MonoBehaviour {
     /// <summary>最大HP</summary>
     private const int MAX_HP = 30;
 
+    public Animator Animator => _animator;
     [SerializeField] private Animator _animator;
 
+    /// <summary>現在の状態</summary>
+    private StateBase _state;
+
     /// <summary>移動最高速度(m/s)</summary>
+    public float MaxSpeed => _maxSpeed;
     [SerializeField] private float _maxSpeed;
 
     /// <summary>移動最高速度(m/s)</summary>
+    public float AttackRange => _attackRange;
     [SerializeField] private float _attackRange;
 
-    /// <summary>攻撃中フラグ</summary>
-    private bool _attackFlag;
-    
     /// <summary>攻撃判定のコライダー</summary>
     [SerializeField] private Attacker _attacker;
 
     private int _hp;
 
-    /// <summary>ダメージ中フラグ</summary>
-    private bool _damageFlag;
-
     /// <summary>喰らい判定のコライダー</summary>
+    public Collider HitCollider => _hitCollider;
     [SerializeField] private Collider _hitCollider;
 
     /// <summary>色の点滅演出のシーケンス</summary>
@@ -51,44 +52,26 @@ public class Enemy : MonoBehaviour {
 
     /// <summary>起動時の処理</summary>
     private void Awake() {
-        _animator.SetBool("IsMove", true);
+        // 追跡状態から開始
+        _state = new EnemyStatePursue(this);
         _hp = MAX_HP;
+    }
+
+    /// <summary>状態遷移</summary>
+    /// <param name="state">次に実行する状態</param>
+    public void Transition(StateBase state) {
+        _state.Transition(state);
     }
 
     /// <summary>更新処理</summary>
     private void Update() {
-        var player = GameManager.Instance.Player;
-        if (_attackFlag || _damageFlag || _hp <= 0 ||  player.IsDead) {
-            // 攻撃中、ダメージ中、死亡時、またはプレイヤー死亡時は何もしない
+        if (GameManager.Instance.Player.IsDead) {
+            // プレイヤー死亡時は何もしない
             return;
         }
 
-        // プレイヤーの方向を向く
-        var playerPos = player.transform.position;
-        transform.LookAt(playerPos);
-
-        // プレイヤーが攻撃範囲にいたら攻撃を実行
-        var currentPos = transform.position;
-        var distance = Vector3.Distance(currentPos, playerPos);
-        if (distance <= _attackRange) {
-            Attack();
-            // 攻撃時は移動処理をせず処理を抜ける
-            return;
-        }
-
-        // プレイヤーに向かって移動
-        var maxDistanceDelta = _maxSpeed * Time.deltaTime;
-        transform.position = Vector3.MoveTowards(currentPos, playerPos, maxDistanceDelta);
-    }
-
-    /// <summary>攻撃</summary>
-    private void Attack() {
-        // 攻撃中フラグを立てる
-        _attackFlag = true;
-        // 攻撃アニメーションのトリガーを起動
-        _animator.SetTrigger("Attack");
-        // 移動アニメーションのフラグを降ろす
-        _animator.SetBool("IsMove", false);
+        // 現在の状態の更新処理
+        _state = _state.Process();
     }
 
     /// <summary>
@@ -113,10 +96,8 @@ public class Enemy : MonoBehaviour {
 
     /// <summary>攻撃終了</summary>
     private void EndAttack() {
-        // 攻撃中フラグを降ろす
-        _attackFlag = false;
-        // 移動アニメーションのフラグを立てる
-        _animator.SetBool("IsMove", true);
+        // 追跡状態へ遷移
+        Transition(new EnemyStatePursue(this));
     }
 
     /// <summary>TriggerのColliderとの接触処理</summary>
@@ -126,61 +107,24 @@ public class Enemy : MonoBehaviour {
         if (other.CompareTag("PlayerAttack")) {
             // 攻撃情報を持つAttackerコンポーネントを取得する
             var attacker = other.GetComponent<Attacker>();
-            Damage(attacker.Power, other);
+            if (_hp <= 0) {
+                // HPが既に0なら処理を抜ける
+                return;
+            }
+            // ダメージ状態へ遷移
+            Transition(new EnemyStateDamage(this, attacker.Power, other));
         }
     }
 
-    /// <summary>ダメージ</summary>
-    /// <param name="damage">ダメージ量</param>
-    /// <param name="attackCollider">攻撃コライダー</param>
-    private void Damage(int damage, Collider attackCollider) {
-        if (_hp <= 0) {
-            // HPが既に0なら処理を抜ける
-            return;
-        }
-
-        // 攻撃中フラグを降ろす
-        _attackFlag = false;
-        // 攻撃アニメーションのトリガーをリセットする
-        _animator.ResetTrigger("Attack");
-
-        // ダメージ中フラグを立てる
-        _damageFlag = true;
-        // 攻撃コライダーの方を向く
-        transform.LookAt(attackCollider.transform.position);
-
-        // ダメージ量分、HPを減らす
-        _hp = Mathf.Max(_hp - damage, 0);
-
-        // ダメージ表示を再生
-        var hitPos = _hitCollider.ClosestPointOnBounds(attackCollider.transform.position);
-        DamageViewManager.Instance.Play(damage, hitPos);
-        // ヒットエフェクトを再生
-        EffectManager.Instance.PlayAttackHit(hitPos + Vector3.up / 2f);
-
-        // ダメージによる点滅表現
-        BlinkColor(new Color(1f, 0.4f, 0.4f));
-
-        // ダメージによる振動表現
-        ShakeBody();
-
-        // HPが0になったの場合、死亡処理に分岐
-        if (_hp <= 0) {
-            KnockBack();
-            Dead();
-            return;
-        }
-
-        // ダメージアニメーションのトリガーを起動
-        _animator.SetTrigger("Damage");
-
-        // ノックバック後にダメージ終了処理を呼び出す
-        KnockBack(EndDamage);
+    /// <summary>HPを減らす</summary>
+    /// <param name="amount">減少量</param>
+    public void ReduceHP(int amount) {
+        _hp = Mathf.Max(_hp - amount, 0);
     }
 
     /// <summary>色点滅の演出を再生</summary>
     /// <param name="color">点滅の色</param>
-    private void BlinkColor(Color color) {
+    public void BlinkColor(Color color) {
         // レンダラーからマテリアルを取得する
         // TIPS: Rendererのmaterialにアクセスすると、そのタイミングでアタッチされているmaterialが複製され
         //       Rendererに対してユニークなインスタンスとして扱えます
@@ -197,7 +141,7 @@ public class Enemy : MonoBehaviour {
     }
 
     /// <summary>振動演出を再生</summary>
-    private void ShakeBody() {
+    public void ShakeBody() {
         // 前回の_shakeSeqがまだ再生中だった場合を考慮して、演出の強制終了メソッドを呼び出し
         _shakeSeq?.Kill();
 
@@ -212,7 +156,7 @@ public class Enemy : MonoBehaviour {
 
     /// <summary>ノックバック演出</summary>
     /// <param name="onComplete">ノックバック終了時の処理</param>
-    private void KnockBack(Action onComplete = null) {
+    public void KnockBack(Action onComplete = null) {
         // 前回の_knockBackSeqがまだ再生中だった場合を考慮して、演出の強制終了メソッドを呼び出し
         _knockBackSeq?.Kill();
 
@@ -226,22 +170,8 @@ public class Enemy : MonoBehaviour {
             .OnComplete(() => onComplete?.Invoke());
     }
 
-    /// <summary>ダメージ終了</summary>
-    private void EndDamage() {
-        // ダメージ中フラグを降ろす
-        _damageFlag = false;
-    }
-
-    /// <summary>死亡</summary>
-    private void Dead() {
-        // 死亡アニメーションのトリガーを起動
-        _animator.SetTrigger("Dead");
-        // 2秒後に死亡終了処理を呼び出す
-        Invoke(nameof(EndDead), 2f);
-    }
-
     /// <summary>死亡終了</summary>
-    private void EndDead() {
+    public void EndDead() {
         // オブジェクトを削除
         EnemyManager.Instance.Remove(this);
     }
