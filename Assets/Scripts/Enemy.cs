@@ -3,26 +3,45 @@ using DG.Tweening;
 using UnityEngine;
 
 public class Enemy : MonoBehaviour {
-    /// <summary>最大HP</summary>
-    private const int MAX_HP = 30;
+    [Serializable]
+    public class Parameter {
+        /// <summary>最大HP</summary>
+        public int MaxHP => _maxHP;
+        [SerializeField] private int _maxHP;
+
+        /// <summary>移動最高速度(m/s)</summary>
+        public float MaxSpeed => _maxSpeed;
+        [SerializeField] private float _maxSpeed;
+
+        /// <summary>旋回最高速度(m/s)</summary>
+        public float MaxTurnSpeed => _maxTurnSpeed;
+        [SerializeField] private float _maxTurnSpeed;
+
+        /// <summary>攻撃開始距離(m)</summary>
+        public float AttackRange => _attackRange;
+        [SerializeField] private float _attackRange;
+
+        /// <summary>攻撃力</summary>
+        public int Power => _power;
+        [SerializeField] private int _power;
+        
+        /// <summary>攻撃準備時間</summary>
+        public float AttackReadyTime => _attackReadyTime;
+        [SerializeField] private float _attackReadyTime;
+
+        /// <summary>攻撃硬直時間</summary>
+        public float AttackRigidTime => _attackRigidTime;
+        [SerializeField] private float _attackRigidTime;
+    }
+
+    public Parameter Param => _parameter;
+    [SerializeField] private Parameter _parameter;
 
     public Animator Animator => _animator;
     [SerializeField] private Animator _animator;
 
     /// <summary>現在の状態</summary>
     private StateBase _state;
-
-    /// <summary>移動最高速度(m/s)</summary>
-    public float MaxSpeed => _maxSpeed;
-    [SerializeField] private float _maxSpeed;
-
-    /// <summary>旋回最高速度(m/s)</summary>
-    public float MaxTurnSpeed => _maxTurnSpeed;
-    [SerializeField] private float _maxTurnSpeed;
-
-    /// <summary>攻撃開始距離(m)</summary>
-    public float AttackRange => _attackRange;
-    [SerializeField] private float _attackRange;
 
     /// <summary>攻撃判定のコライダー</summary>
     [SerializeField] private Attacker _attacker;
@@ -58,7 +77,7 @@ public class Enemy : MonoBehaviour {
     private void Awake() {
         // 待機状態から開始
         _state = new EnemyStatePatrol(this);
-        _hp = MAX_HP;
+        _hp = Param.MaxHP;
     }
 
     /// <summary>状態遷移</summary>
@@ -84,7 +103,7 @@ public class Enemy : MonoBehaviour {
     /// </summary>
     private void AttackImpactEvent() {
         // 攻撃の威力を設定する
-        _attacker.SetData(20);
+        _attacker.SetData(Param.Power);
         // 攻撃判定を有効にする
         _attacker.Collider.enabled = true;
         // 0.1秒後に攻撃判定を無効にする処理を呼び出す
