@@ -37,6 +37,21 @@ public class Player : MonoBehaviour {
     /// <summary>攻撃中に前進した距離カウント</summary>
     private float _attackAdvanceCount;
 
+    /// <summary>攻撃力</summary>
+    [SerializeField] private int _power;
+
+    /// <summary>コンボカウント</summary>
+    private int _comboCount;
+
+    /// <summary>攻撃時間</summary>
+    private float _attackTimeCount;
+    
+    /// <summary>コンボボーナスの攻撃力係数</summary>
+    [SerializeField] private float[] _comboBounusArray;
+
+    /// <summary>コンボが中断される時間</summary>
+    [SerializeField] private float _comboBreakTime;
+
     private int _hp;
 
     /// <summary>ダメージ中フラグ</summary>
@@ -65,6 +80,9 @@ public class Player : MonoBehaviour {
         // バーチャルパッド入力開始・終了時のイベント登録
         _inputVirtualJoyStick.OnStartEvent = ()=> _animator.SetBool("IsMove", true);
         _inputVirtualJoyStick.OnCancelEvent = ()=> _animator.SetBool("IsMove", false);
+
+        // 攻撃ヒット時のイベントを攻撃判定に登録
+        _attacker.OnTriggerEnterEvent = OnAttackHit;
     }
 
     /// <summary>実行開始前の処理</summary>
@@ -84,6 +102,7 @@ public class Player : MonoBehaviour {
         if (_attackFlag) {
             UpdateAttackRotate();
             UpdateAttackAdvance();
+            UpdateCombo();
         }
         
         if (!CanInput) {
@@ -184,13 +203,32 @@ public class Player : MonoBehaviour {
         _attackAdvanceCount += advanceDistance;
     }
 
+    /// <summary>コンボカウントの更新処理</summary>
+    private void UpdateCombo() {
+        if (_comboCount < 1) {
+            // コンボが1カウント未満なら何もしない
+            return;
+        }
+
+        // 攻撃ヒット後の時間をカウント
+        _attackTimeCount += Time.deltaTime;
+        
+        if (_attackTimeCount >= _comboBreakTime) {
+            // 一定時間以上攻撃がヒットしなければコンボをリセット
+            _comboCount = 0;
+        }
+    }
+
     /// <summary>
     /// 攻撃のインパクトのタイミングの処理
     /// 攻撃モーションの設定したAnimationEventから呼び出される
     /// </summary>
     private void AttackImpactEvent() {
+        // コンボボーナスを加味した攻撃力を計算（2ヒット目からボーナス計上）
+        var comboBounus = _comboCount < 1 ? 1f : _comboBounusArray[_comboCount - 1]; 
+         var power = _power * comboBounus;
         // 攻撃の威力を設定する
-        _attacker.SetData(10);
+        _attacker.SetData((int)power);
         // 攻撃判定を有効にする
         _attacker.Collider.enabled = true;
         // 0.1秒後に攻撃判定を無効にする処理を呼び出す
@@ -202,6 +240,18 @@ public class Player : MonoBehaviour {
         _attacker.Collider.enabled = false;
         // 攻撃中フラグを降ろす
         _attackFlag = false;
+    }
+
+    /// <summary>攻撃判定の接触イベント</summary>
+    /// <param name="other">接触したコライダー</param>
+    private void OnAttackHit(Collider other) {
+        // 接触したコライダーがEnemyAttackタグならコンボカウント処理
+        if (other.CompareTag("Enemy")) {
+            // コンボ数をカウント
+            _comboCount = Mathf.Min(_comboCount + 1, _comboBounusArray.Length);
+            //攻撃後の経過時間をリセット
+            _attackTimeCount = 0f;
+        }
     }
 
     /// <summary>TriggerのColliderとの接触処理</summary>
