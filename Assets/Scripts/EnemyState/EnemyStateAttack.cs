@@ -10,12 +10,6 @@ public class EnemyStateAttack : EnemyStateBase {
         Rigid,
     }
 
-    /// <summary>準備時間</summary>
-    private const float READY_TIME = 0.5f;
-
-    /// <summary>硬直時間</summary>
-    private const float RIGID_TIME = 1.5f;
-
     private float _countTime;
 
     /// <summary>攻撃進行状態</summary>
@@ -38,7 +32,7 @@ public class EnemyStateAttack : EnemyStateBase {
 
         switch (_progress) {
             case Progress.Ready:
-                if (_countTime >= READY_TIME) {
+                if (_countTime >= _enemy.Param.AttackReadyTime) {
                     // 攻撃アニメーションのトリガーを起動
                     _enemy.Animator.SetTrigger("Attack");
                     // 進捗を攻撃後の硬直へ進める
@@ -46,7 +40,7 @@ public class EnemyStateAttack : EnemyStateBase {
                 }
                 break;
             case Progress.Rigid:
-                if (_countTime >= RIGID_TIME) {
+                if (_countTime >= _enemy.Param.AttackRigidTime) {
                     // 待機状態へ遷移
                     Transition(new EnemyStatePatrol(_enemy));
                 }

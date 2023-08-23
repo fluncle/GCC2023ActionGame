@@ -45,8 +45,8 @@ CapsuleCollider:
   m_Enabled: 0
   m_Radius: 0.5
   m_Height: 1
-  m_Direction: 1
-  m_Center: {x: 0, y: 0.5, z: 1.5}
+  m_Direction: 2
+  m_Center: {x: 0, y: 0.5, z: 0.5}
 --- !u!114 &8135465959149887021
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -524,11 +524,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0b59fb0541d2040878f131d3eaed14f8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _parameter:
+    _maxHP: 30
+    _maxSpeed: 1.5
+    _maxTurnSpeed: 120
+    _attackRange: 1.5
+    _power: 20
+    _attackReadyTime: 0.5
+    _attackRigidTime: 1.5
   _animator: {fileID: 1585742123497334116}
-  _maxSpeed: 1.5
-  _maxTurnSpeed: 120
-  _attackRange: 1.5
   _attacker: {fileID: 8135465959149887021}
+  _attackCollider: {fileID: 1585742122867278983}
   _hitCollider: {fileID: 1585742122822807295}
   _bodyRenderer: {fileID: 1585742123493186468}
   _shakeRoot: {fileID: 1585742123506354820}
