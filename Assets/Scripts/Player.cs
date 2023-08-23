@@ -76,6 +76,11 @@ public class Player : MonoBehaviour {
 
     /// <summary>更新処理</summary>
     private void Update() {
+        if (GameManager.Instance.IsTimeOver) {
+            // 時間切れ時は処理を抜ける
+            return;
+        }
+
         if (_attackFlag) {
             UpdateAttackRotate();
             UpdateAttackAdvance();
