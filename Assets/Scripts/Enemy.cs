@@ -16,7 +16,11 @@ public class Enemy : MonoBehaviour {
     public float MaxSpeed => _maxSpeed;
     [SerializeField] private float _maxSpeed;
 
-    /// <summary>移動最高速度(m/s)</summary>
+    /// <summary>旋回最高速度(m/s)</summary>
+    public float MaxTurnSpeed => _maxTurnSpeed;
+    [SerializeField] private float _maxTurnSpeed;
+
+    /// <summary>攻撃開始距離(m)</summary>
     public float AttackRange => _attackRange;
     [SerializeField] private float _attackRange;
 

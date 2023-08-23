@@ -19,13 +19,17 @@ public class EnemyStatePursue : EnemyStateBase {
         base.Update();
         var player = GameManager.Instance.Player;
 
-        // プレイヤーの方向を向く
         var playerPos = player.transform.position;
-        _enemy.transform.LookAt(playerPos);
+        var enemyrT = _enemy.transform;
+        var enemyrRot = _enemy.transform.rotation;
+
+        // プレイヤーの方向へ回転
+        var lookRotation = Quaternion.LookRotation(playerPos - enemyrT.position);
+        var turnDegrees = _enemy.MaxTurnSpeed * Time.deltaTime;
+        _enemy.transform.rotation = Quaternion.RotateTowards(enemyrRot, lookRotation, turnDegrees);
 
         // プレイヤーが攻撃範囲にいたら攻撃を実行
-        var currentPos = _enemy.transform.position;
-        var distance = Vector3.Distance(currentPos, playerPos);
+        var distance = Vector3.Distance(enemyrT.position, playerPos);
         if (distance <= _enemy.AttackRange) {
             // 攻撃時は移動処理をせず処理を抜ける
             _enemy.Transition(new EnemyStateAttack(_enemy));
@@ -39,9 +43,9 @@ public class EnemyStatePursue : EnemyStateBase {
             return;
         }
 
-        // プレイヤーに向かって移動
-        var maxDistanceDelta = _enemy.MaxSpeed * Time.deltaTime;
-        _enemy.transform.position = Vector3.MoveTowards(currentPos, playerPos, maxDistanceDelta);
+        // 前方へ移動
+        var moveDistance = _enemy.MaxSpeed * Time.deltaTime;
+        _enemy.transform.position += _enemy.transform.forward * moveDistance;
     }
 
     /// <summary>Stateを抜けるときの処理</summary>
