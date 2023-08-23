@@ -2,6 +2,9 @@ using UnityEngine;
 
 /// <summary>プレイヤーを追いかける状態</summary>
 public class EnemyStatePursue : EnemyStateBase {
+    /// <summary>追跡を諦める距離</summary>
+    private const float CANCEL_DISTANCE = 5f;
+    
     public EnemyStatePursue(Enemy enemy) : base(enemy) { }
 
     /// <summary>このStateに遷移したときに最初に呼び出す処理</summary>
@@ -16,22 +19,33 @@ public class EnemyStatePursue : EnemyStateBase {
         base.Update();
         var player = GameManager.Instance.Player;
 
-        // プレイヤーの方向を向く
         var playerPos = player.transform.position;
-        _enemy.transform.LookAt(playerPos);
+        var enemyrT = _enemy.transform;
+        var enemyrRot = _enemy.transform.rotation;
+
+        // プレイヤーの方向へ回転
+        var lookRotation = Quaternion.LookRotation(playerPos - enemyrT.position);
+        var turnDegrees = _enemy.MaxTurnSpeed * Time.deltaTime;
+        _enemy.transform.rotation = Quaternion.RotateTowards(enemyrRot, lookRotation, turnDegrees);
 
         // プレイヤーが攻撃範囲にいたら攻撃を実行
-        var currentPos = _enemy.transform.position;
-        var distance = Vector3.Distance(currentPos, playerPos);
+        var distance = Vector3.Distance(enemyrT.position, playerPos);
         if (distance <= _enemy.AttackRange) {
             // 攻撃時は移動処理をせず処理を抜ける
             _enemy.Transition(new EnemyStateAttack(_enemy));
             return;
         }
 
-        // プレイヤーに向かって移動
-        var maxDistanceDelta = _enemy.MaxSpeed * Time.deltaTime;
-        _enemy.transform.position = Vector3.MoveTowards(currentPos, playerPos, maxDistanceDelta);
+        // 一定距離以上プレイヤーから離れたら追跡をやめる
+        if (distance > CANCEL_DISTANCE) {
+            // パトロール状態へ遷移
+            _enemy.Transition(new EnemyStatePatrol(_enemy));
+            return;
+        }
+
+        // 前方へ移動
+        var moveDistance = _enemy.MaxSpeed * Time.deltaTime;
+        _enemy.transform.position += _enemy.transform.forward * moveDistance;
     }
 
     /// <summary>Stateを抜けるときの処理</summary>

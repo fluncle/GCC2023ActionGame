@@ -16,7 +16,11 @@ public class Enemy : MonoBehaviour {
     public float MaxSpeed => _maxSpeed;
     [SerializeField] private float _maxSpeed;
 
-    /// <summary>移動最高速度(m/s)</summary>
+    /// <summary>旋回最高速度(m/s)</summary>
+    public float MaxTurnSpeed => _maxTurnSpeed;
+    [SerializeField] private float _maxTurnSpeed;
+
+    /// <summary>攻撃開始距離(m)</summary>
     public float AttackRange => _attackRange;
     [SerializeField] private float _attackRange;
 
@@ -52,8 +56,8 @@ public class Enemy : MonoBehaviour {
 
     /// <summary>起動時の処理</summary>
     private void Awake() {
-        // 追跡状態から開始
-        _state = new EnemyStatePursue(this);
+        // 待機状態から開始
+        _state = new EnemyStatePatrol(this);
         _hp = MAX_HP;
     }
 
@@ -90,14 +94,6 @@ public class Enemy : MonoBehaviour {
     /// <summary>攻撃判定を無効化</summary>
     private void DisableAttackCollider() {
         _attacker.Collider.enabled = false;
-        // 1秒後に攻撃終了処理を呼び出す
-        Invoke(nameof(EndAttack), 1f);
-    }
-
-    /// <summary>攻撃終了</summary>
-    private void EndAttack() {
-        // 追跡状態へ遷移
-        Transition(new EnemyStatePursue(this));
     }
 
     /// <summary>TriggerのColliderとの接触処理</summary>
