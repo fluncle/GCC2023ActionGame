@@ -99,8 +99,8 @@ public class Enemy : MonoBehaviour {
 
     /// <summary>更新処理</summary>
     private void Update() {
-        if (GameManager.Instance.Player.IsDead) {
-            // プレイヤー死亡時は何もしない
+        if (GameManager.Instance.Player.IsDead || GameManager.Instance.IsTimeOver) {
+            // プレイヤーが死亡しているか、時間切れ時は何もしない
             return;
         }
 
