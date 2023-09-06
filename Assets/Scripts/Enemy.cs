@@ -14,6 +14,9 @@ public class Enemy : MonoBehaviour {
     /// <summary>移動最高速度(m/s)</summary>
     [SerializeField] private float _attackRange;
 
+    /// <summary>攻撃準備フラグ</summary>
+    private bool _attackReadyFlag;
+
     /// <summary>攻撃中フラグ</summary>
     private bool _attackFlag;
     
@@ -58,8 +61,8 @@ public class Enemy : MonoBehaviour {
     /// <summary>更新処理</summary>
     private void Update() {
         var player = GameManager.Instance.Player;
-        if (_attackFlag || _damageFlag || _hp <= 0 ||  player.IsDead) {
-            // 攻撃中、ダメージ中、死亡時、またはプレイヤー死亡時は何もしない
+        if (_attackReadyFlag || _attackFlag || _damageFlag || _hp <= 0 ||  player.IsDead) {
+            // 攻撃準備中、攻撃中、ダメージ中、死亡時、またはプレイヤー死亡時は何もしない
             return;
         }
 
@@ -71,7 +74,7 @@ public class Enemy : MonoBehaviour {
         var currentPos = transform.position;
         var distance = Vector3.Distance(currentPos, playerPos);
         if (distance <= _attackRange) {
-            Attack();
+            AttackReady();
             // 攻撃時は移動処理をせず処理を抜ける
             return;
         }
@@ -81,14 +84,24 @@ public class Enemy : MonoBehaviour {
         transform.position = Vector3.MoveTowards(currentPos, playerPos, maxDistanceDelta);
     }
 
+    /// <summary>攻撃準備</summary>
+    private void AttackReady() {
+        // 攻撃準備中フラグを立てる
+        _attackReadyFlag = true;
+        // 移動アニメーションのフラグを降ろす
+        _animator.SetBool("IsMove", false);
+        // 0.1秒後に攻撃判定を無効にする処理を呼び出す
+        Invoke(nameof(Attack), 0.3f);
+    }
+
     /// <summary>攻撃</summary>
     private void Attack() {
+        // 攻撃準備中フラグを降ろす
+        _attackReadyFlag = false;
         // 攻撃中フラグを立てる
         _attackFlag = true;
         // 攻撃アニメーションのトリガーを起動
         _animator.SetTrigger("Attack");
-        // 移動アニメーションのフラグを降ろす
-        _animator.SetBool("IsMove", false);
     }
 
     /// <summary>
@@ -139,10 +152,19 @@ public class Enemy : MonoBehaviour {
             return;
         }
 
-        // 攻撃中フラグを降ろす
-        _attackFlag = false;
-        // 攻撃アニメーションのトリガーをリセットする
-        _animator.ResetTrigger("Attack");
+        if (_attackReadyFlag) {
+            // 攻撃準備中フラグを降ろす
+            _attackReadyFlag = false;
+            // 登録したAttackのInvokeをキャンセル
+            CancelInvoke(nameof(Attack));
+        }
+
+        if (_attackFlag) {
+            // 攻撃中フラグを降ろす
+            _attackFlag = false;
+            // 攻撃アニメーションのトリガーをリセットする
+            _animator.ResetTrigger("Attack");
+        }
 
         // ダメージ中フラグを立てる
         _damageFlag = true;
