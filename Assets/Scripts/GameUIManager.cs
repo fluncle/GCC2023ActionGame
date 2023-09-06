@@ -16,6 +16,10 @@ public class GameUIManager : MonoBehaviour {
     public GameEndView GameEndView => _gameEndView;
     [SerializeField] private GameEndView _gameEndView;
 
+    /// <summary>時間表示</summary>
+    public TimeView TimeView => _timeView;
+    [SerializeField] private TimeView _timeView;
+
     /// <summary>起動時の処理</summary>
     private void Awake() {
         Instance = this;
