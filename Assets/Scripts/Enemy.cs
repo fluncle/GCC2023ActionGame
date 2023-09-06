@@ -14,6 +14,9 @@ public class Enemy : MonoBehaviour {
     /// <summary>移動最高速度(m/s)</summary>
     [SerializeField] private float _attackRange;
 
+    /// <summary>攻撃準備フラグ</summary>
+    private bool _attackReadyFlag;
+
     /// <summary>攻撃中フラグ</summary>
     private bool _attackFlag;
     
@@ -34,6 +37,9 @@ public class Enemy : MonoBehaviour {
     /// <summary>3Dモデルのレンダラー</summary>
     [SerializeField] private Renderer _bodyRenderer;
 
+    /// <summary>3Dモデルのマテリアル</summary>
+    [SerializeField] private Material _bodyMaterial;
+
     /// <summary>振動演出のシーケンス</summary>
     private Sequence _shakeSeq;
     
@@ -53,13 +59,18 @@ public class Enemy : MonoBehaviour {
     private void Awake() {
         _animator.SetBool("IsMove", true);
         _hp = MAX_HP;
+        
+        // レンダラーからマテリアルを取得する
+        // TIPS: Rendererのmaterialにアクセスすると、そのタイミングでアタッチされているmaterialが複製され
+        //       Rendererに対してユニークなインスタンスとして扱えます
+        _bodyMaterial = _bodyRenderer.material;
     }
 
     /// <summary>更新処理</summary>
     private void Update() {
         var player = GameManager.Instance.Player;
-        if (_attackFlag || _damageFlag || _hp <= 0 ||  player.IsDead) {
-            // 攻撃中、ダメージ中、死亡時、またはプレイヤー死亡時は何もしない
+        if (_attackReadyFlag || _attackFlag || _damageFlag || _hp <= 0 ||  player.IsDead) {
+            // 攻撃準備中、攻撃中、ダメージ中、死亡時、またはプレイヤー死亡時は何もしない
             return;
         }
 
@@ -71,7 +82,7 @@ public class Enemy : MonoBehaviour {
         var currentPos = transform.position;
         var distance = Vector3.Distance(currentPos, playerPos);
         if (distance <= _attackRange) {
-            Attack();
+            AttackReady();
             // 攻撃時は移動処理をせず処理を抜ける
             return;
         }
@@ -81,14 +92,30 @@ public class Enemy : MonoBehaviour {
         transform.position = Vector3.MoveTowards(currentPos, playerPos, maxDistanceDelta);
     }
 
+    /// <summary>攻撃準備</summary>
+    private void AttackReady() {
+        // 攻撃準備中フラグを立てる
+        _attackReadyFlag = true;
+        // 攻撃準備アニメーションのトリガーを起動
+        _animator.SetTrigger("AttackReady");
+        // 移動アニメーションのフラグを降ろす
+        _animator.SetBool("IsMove", false);
+        // 攻撃準備表現として、体を3回点滅させる
+        FadeColor(Color.gray, 3);
+        // 攻撃準備表現として、体を振動させる
+        ShakeBody(2);
+        // 0.1秒後に攻撃判定を無効にする処理を呼び出す
+        Invoke(nameof(Attack), 0.3f);
+    }
+
     /// <summary>攻撃</summary>
     private void Attack() {
+        // 攻撃準備中フラグを降ろす
+        _attackReadyFlag = false;
         // 攻撃中フラグを立てる
         _attackFlag = true;
         // 攻撃アニメーションのトリガーを起動
         _animator.SetTrigger("Attack");
-        // 移動アニメーションのフラグを降ろす
-        _animator.SetBool("IsMove", false);
     }
 
     /// <summary>
@@ -107,6 +134,10 @@ public class Enemy : MonoBehaviour {
     /// <summary>攻撃判定を無効化</summary>
     private void DisableAttackCollider() {
         _attacker.Collider.enabled = false;
+        // 攻撃準備表現の点滅を停止する
+        _blinkColorSeq?.Complete();
+        // 攻撃準備表現の振動を停止する
+        _shakeSeq?.Complete();
         // 1秒後に攻撃終了処理を呼び出す
         Invoke(nameof(EndAttack), 1f);
     }
@@ -139,10 +170,21 @@ public class Enemy : MonoBehaviour {
             return;
         }
 
-        // 攻撃中フラグを降ろす
-        _attackFlag = false;
-        // 攻撃アニメーションのトリガーをリセットする
-        _animator.ResetTrigger("Attack");
+        if (_attackReadyFlag) {
+            // 攻撃準備中フラグを降ろす
+            _attackReadyFlag = false;
+            // 攻撃準備アニメーションのトリガーをリセットする
+            _animator.ResetTrigger("AttackReady");
+            // 登録したAttackのInvokeをキャンセル
+            CancelInvoke(nameof(Attack));
+        }
+
+        if (_attackFlag) {
+            // 攻撃中フラグを降ろす
+            _attackFlag = false;
+            // 攻撃アニメーションのトリガーをリセットする
+            _animator.ResetTrigger("Attack");
+        }
 
         // ダメージ中フラグを立てる
         _damageFlag = true;
@@ -181,19 +223,36 @@ public class Enemy : MonoBehaviour {
     /// <summary>色点滅の演出を再生</summary>
     /// <param name="color">点滅の色</param>
     private void BlinkColor(Color color) {
-        // レンダラーからマテリアルを取得する
-        // TIPS: Rendererのmaterialにアクセスすると、そのタイミングでアタッチされているmaterialが複製され
-        //       Rendererに対してユニークなインスタンスとして扱えます
-        var material = _bodyRenderer.material;
-
         // 前回の_blinkColorSeqがまだ再生中だった場合を考慮して、演出の強制終了メソッドを呼び出し
         _blinkColorSeq?.Kill();
         
         // 0.1秒で引数の色に変化させ、その後0.15秒で元の色に戻す演出を作成・再生
         _blinkColorSeq = DOTween.Sequence()
             .SetLink(gameObject)
-            .Append(DOTween.To(() => Color.black, c => material.SetColor("_Color", c), color, 0.1f))
-            .Append(DOTween.To(() => color, c => material.SetColor("_Color", c), Color.black, 0.15f));
+            .Append(DOTween.To(() => Color.black, SetColor, color, 0.1f))
+            .Append(DOTween.To(() => color, SetColor, Color.black, 0.15f));
+    }
+
+    /// <summary>フェードによる色点滅の演出を再生</summary>
+    /// <param name="color">点滅の色</param>
+    /// <param name="loop">ループ回数</param>
+    private void FadeColor(Color color, int loop) {
+        // 前回の_blinkColorSeqがまだ再生中だった場合を考慮して、演出の強制終了メソッドを呼び出し
+        _blinkColorSeq?.Kill();
+
+        _blinkColorSeq = DOTween.Sequence()
+            .SetLink(gameObject);
+
+        for (int i = 0; i < loop; i++) {
+            _blinkColorSeq
+                .Append(DOTween.To(() => Color.black, SetColor, color, 0.15f))
+                .Append(DOTween.To(() => color, SetColor, Color.black, 0.15f));
+        }
+    }
+
+    /// <summary>色を設定</summary>
+    private void SetColor(Color color) {
+        _bodyMaterial.SetColor("_Color", color);
     }
 
     /// <summary>振動演出を再生</summary>
@@ -208,6 +267,19 @@ public class Enemy : MonoBehaviour {
             .Append(DOTween.Shake(() => Vector3.zero, offset => _shakeOffset = offset, 0.5f, 0.25f, 30))
             .OnUpdate(() => _shakeRoot.localPosition += _shakeOffset)
             .SetUpdate(UpdateType.Late);
+    }
+
+    /// <summary>ループする振動演出を再生</summary>
+    private void ShakeBody(int loop) {
+        // 前回の_shakeSeqがまだ再生中だった場合を考慮して、演出の強制終了メソッドを呼び出し
+        _shakeSeq?.Kill();
+
+        _shakeSeq = DOTween.Sequence()
+            .SetLink(gameObject)
+            .Append(DOTween.Shake(() => Vector3.zero, offset => _shakeOffset = offset, 0.5f, 0.15f, 20, fadeOut: false))
+            .OnUpdate(() => _shakeRoot.localPosition += _shakeOffset)
+            .SetUpdate(UpdateType.Late)
+            .SetLoops(loop);
     }
 
     /// <summary>ノックバック演出</summary>
