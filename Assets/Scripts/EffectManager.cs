@@ -10,6 +10,9 @@ public class EffectManager : MonoBehaviour {
     /// <summary>攻撃ヒットエフェクトのプレハブ</summary>
     [SerializeField] private ParticleSystem _attackHitPrefab;
 
+    /// <summary>致死ダメージの攻撃ヒットエフェクトのプレハブ</summary>
+    [SerializeField] private ParticleSystem _attackHitDeadPrefab;
+
     /// <summary>起動時の処理</summary>
     private void Awake() {
         Instance = this;
@@ -18,5 +21,10 @@ public class EffectManager : MonoBehaviour {
     /// <summary>攻撃ヒットエフェクトを再生</summary>
     public void PlayAttackHit(Vector3 position) {
         Instantiate(_attackHitPrefab, position, Quaternion.identity, _effectsParent);
+    }
+
+    /// <summary>攻撃ヒットエフェクトを再生</summary>
+    public void PlayAttackHitDead(Vector3 position) {
+        Instantiate(_attackHitDeadPrefab, position, Quaternion.identity, _effectsParent);
     }
 }

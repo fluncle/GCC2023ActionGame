@@ -1,10 +1,15 @@
 using System;
 using DG.Tweening;
 using UnityEngine;
+using UnityEngine.Rendering;
+using Sequence = DG.Tweening.Sequence;
 
 public class Enemy : MonoBehaviour {
     /// <summary>最大HP</summary>
     private const int MAX_HP = 30;
+
+    /// <summary>ヒットストップ時間</summary>
+    private const float HIT_STOP_DURATION = 0.3f;
 
     [SerializeField] private Animator _animator;
 
@@ -52,6 +57,9 @@ public class Enemy : MonoBehaviour {
     /// <summary>ノックバック演出のシーケンス</summary>
     private Sequence _knockBackSeq;
 
+    /// <summary> 死亡時に再生するエフェクト </summary>
+    [SerializeField] private ParticleSystem _deadEffect;
+    
     /// <summary>死亡しているか否か</summary>
     public bool IsDead => _hp <= 0;
 
@@ -197,8 +205,6 @@ public class Enemy : MonoBehaviour {
         // ダメージ表示を再生
         var hitPos = _hitCollider.ClosestPointOnBounds(attackCollider.transform.position);
         DamageViewManager.Instance.Play(damage, hitPos);
-        // ヒットエフェクトを再生
-        EffectManager.Instance.PlayAttackHit(hitPos + Vector3.up / 2f);
 
         // ダメージによる点滅表現
         BlinkColor(new Color(1f, 0.4f, 0.4f));
@@ -208,10 +214,16 @@ public class Enemy : MonoBehaviour {
 
         // HPが0になったの場合、死亡処理に分岐
         if (_hp <= 0) {
-            KnockBack();
-            Dead();
+            BeginDead();
+            // 致死ダメージヒットエフェクトを再生
+            EffectManager.Instance.PlayAttackHitDead(hitPos);
+            // 致死ダメージ時、プレイヤーのヒットストップ処理を呼ぶ
+            GameManager.Instance.Player.PlayHitStop(HIT_STOP_DURATION);
             return;
         }
+
+        // ヒットエフェクトを再生
+        EffectManager.Instance.PlayAttackHit(hitPos);
 
         // ダメージアニメーションのトリガーを起動
         _animator.SetTrigger("Damage");
@@ -304,12 +316,46 @@ public class Enemy : MonoBehaviour {
         _damageFlag = false;
     }
 
-    /// <summary>死亡</summary>
-    private void Dead() {
+    /// <summary>死亡演出開始</summary>
+    private void BeginDead() {
         // 死亡アニメーションのトリガーを起動
         _animator.SetTrigger("Dead");
-        // 2秒後に死亡終了処理を呼び出す
-        Invoke(nameof(EndDead), 2f);
+        _animator.speed = 0f;
+
+        // _blinkColorSeqがまだ再生中だった場合を考慮して、演出の強制終了メソッドを呼び出し
+        _blinkColorSeq?.Kill();
+        // 致死ダメージ時の色を設定
+        SetColor(new Color(1f, 0.4f, 0.4f));
+
+        // ヒットストップ時間経過後に死亡処理を呼び出す
+        Invoke(nameof(Dead), HIT_STOP_DURATION);
+    }
+
+    /// <summary>死亡</summary>
+    private void Dead() {
+        // アニメーションを再開
+        _animator.speed = 1f;
+        // 死亡エフェクトを再生
+        _deadEffect.Play();
+
+        // _blinkColorSeqがまだ再生中だった場合を考慮して、演出の強制終了メソッドを呼び出し
+        _blinkColorSeq?.Kill();
+        // 死亡時の色を設定
+        SetColor(new Color(0.3f, 0.1f, 1f));
+
+        // フェードアウト演出のために影を落とさないようにする
+        _bodyRenderer.shadowCastingMode = ShadowCastingMode.Off;
+
+        // 1.5秒かけてディゾルブ表現によるフェードアウトを再生し、その後に死亡終了処理を呼び出す
+        DOTween.Sequence()
+            .SetLink(gameObject)
+            .Append(DOTween.To(() => 0f, SetDisolveFade, 1f, 1.5f))
+            .OnComplete(EndDead);
+    }
+
+    /// <summary>ディゾルブ表現によるフェードを設定</summary>
+    private void SetDisolveFade(float threshold) {
+        _bodyMaterial.SetFloat("_Threshold", threshold);
     }
 
     /// <summary>死亡終了</summary>

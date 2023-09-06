@@ -1091,6 +1091,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _effectsParent: {fileID: 766644005}
   _attackHitPrefab: {fileID: 198602994958770764, guid: 477296c4ffd1044b887dba65847774a8, type: 3}
+  _attackHitDeadPrefab: {fileID: 2858719418465607203, guid: 1137be6ad78d845e68caf50d236eff06, type: 3}
 --- !u!4 &766644005
 Transform:
   m_ObjectHideFlags: 0
@@ -2779,18 +2780,6 @@ PrefabInstance:
     - target: {fileID: 1585742123506354838, guid: 83161fee0c79a451689f0d8c7f1ad5a7, type: 3}
       propertyPath: m_RootOrder
       value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 1585742123506354838, guid: 83161fee0c79a451689f0d8c7f1ad5a7, type: 3}
-      propertyPath: m_LocalScale.x
-      value: 0.7
-      objectReference: {fileID: 0}
-    - target: {fileID: 1585742123506354838, guid: 83161fee0c79a451689f0d8c7f1ad5a7, type: 3}
-      propertyPath: m_LocalScale.y
-      value: 0.7
-      objectReference: {fileID: 0}
-    - target: {fileID: 1585742123506354838, guid: 83161fee0c79a451689f0d8c7f1ad5a7, type: 3}
-      propertyPath: m_LocalScale.z
-      value: 0.7
       objectReference: {fileID: 0}
     - target: {fileID: 1585742123506354838, guid: 83161fee0c79a451689f0d8c7f1ad5a7, type: 3}
       propertyPath: m_LocalPosition.x
