@@ -8,6 +8,9 @@ public class EnemyManager : MonoBehaviour {
     /// <summary>ゲーム内で生きている敵リスト</summary>
     private List<Enemy> _enemies;
 
+    /// <summary>敵が存在するか否か</summary>
+    public bool IsExistEnemy => _enemies.Count > 0;
+
     private void Awake() {
         Instance = this;
         // 子オブジェクト内から全てのEnemyコンポーネントを検索して取得
@@ -28,7 +31,7 @@ public class EnemyManager : MonoBehaviour {
         _enemies.Remove(enemy);
         Destroy(enemy.gameObject);
 
-        if (_enemies.Count <= 0 && !GameManager.Instance.Player.IsDead) {
+        if (!IsExistEnemy && !GameManager.Instance.Player.IsDead) {
             // 敵リスト内の敵の数が0になっていたらゲームクリア演出を呼び出し
             // ただし、既にプレイヤーが死亡していたらクリア演出は呼ばない
             GameUIManager.Instance.GameEndView.Play(true);

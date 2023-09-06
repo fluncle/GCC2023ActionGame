@@ -77,8 +77,8 @@ public class Enemy : MonoBehaviour {
     /// <summary>更新処理</summary>
     private void Update() {
         var player = GameManager.Instance.Player;
-        if (_attackReadyFlag || _attackFlag || _damageFlag || _hp <= 0 ||  player.IsDead) {
-            // 攻撃準備中、攻撃中、ダメージ中、死亡時、またはプレイヤー死亡時は何もしない
+        if (_attackReadyFlag || _attackFlag || _damageFlag || _hp <= 0 ||  player.IsDead || GameManager.Instance.IsTimeOver) {
+            // 攻撃準備中、攻撃中、ダメージ中、死亡時、プレイヤー死亡時、時間切れ時は何もしない
             return;
         }
 
